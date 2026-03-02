@@ -13,8 +13,14 @@ class BaseChessPiece(ABC):
 
 
     @abstractmethod
-    def move(self, movement):
-        print(movement)
+    def move(self):
+        pass
+
+    def set_position(self, square: str):
+        self.position = square
+
+    def define_board(self, board):
+        self.board = board
 
     def die(self):
         self.is_alive = False
@@ -145,3 +151,44 @@ class Board:
         }
 
         self.squares.update(white_pawns)
+
+    def move_piece(self, from_square, to_square):
+        piece = self.squares[from_square]
+
+        if piece is None:
+            print(f"No piece at {from_square}")
+            return
+
+        # Check if target square has a piece
+        target = self.squares[to_square]
+        if target is not None:
+            target.die()  # kill piece
+            print(f"{piece} captures {target} at {to_square}")
+
+        # Move piece
+        self.squares[to_square] = piece
+        self.squares[from_square] = None
+        piece.set_position(to_square)
+
+    def find_piece(self, symbol: str, identifier: int, color: str):
+
+        pieces = [
+            piece for piece in self.squares.values()
+            if piece is not None
+            and piece.symbol == symbol
+            and piece.identifier == identifier
+            and piece.color == color
+        ]
+        return pieces[0] if pieces else None
+    
+
+    def kill_piece(self, square: str):
+  
+        piece = self.squares.get(square)
+        if piece:
+            piece.die()          # mark piece as dead
+            self.squares[square] = None
+            print(f"{piece} has been killed at {square}")
+        else:
+            print(f"No piece to kill at {square}")
+        
