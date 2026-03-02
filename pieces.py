@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+#test
 class BaseChessPiece(ABC):
 
     def __init__(self, color: str, name: str, symbol: str, identifier: int):
