@@ -13,8 +13,30 @@ class BaseChessPiece(ABC):
 
 
     @abstractmethod
-    def move(self):
-        pass
+    def move(self, target_square: str):
+
+        # Default logic to move on the board:
+        if self.board is None:
+            print("Board not defined for this piece")
+            return
+
+        new_location = self.board.squares.get(target_square)
+
+        
+        if new_location is None:
+            print(f"{self} moves to {target_square}")
+        else: 
+            if new_location.color != self.color:
+                print(f"{self} captures {new_location} at {target_square}")
+                self.board.kill_piece(target_square)
+            else:
+                print(f"{self} cannot move to {target_square}, friendly piece there!")
+                return
+
+       
+        self.board.squares[self.position] = None
+        self.board.squares[target_square] = self
+        self.position = target_square
 
     def set_position(self, square: str):
         self.position = square
@@ -35,12 +57,26 @@ class BaseChessPiece(ABC):
 
 class Pawn(BaseChessPiece):
 
-    def __init__(self, color:str, identifier:int):
+    def __init__(self, color: str, identifier: int):
         super().__init__(color, "Pawn", "-", identifier)
 
     def move(self):
-        movement = "Pawn moves forward 1 position"
-        super().move(movement)
+        if self.position is None or self.board is None:
+            print("Cannot move, piece not on board")
+            return
+
+        # Determine direction based on color
+        row = int(self.position[1])
+        col = self.position[0]
+        new_row = row + 1 if self.color == "WHITE" else row - 1
+
+        # Make sure pawn does not go off-board
+        if new_row < 1 or new_row > 8:
+            print(f"{self} cannot move off the board!")
+            return
+
+        target_square = f"{col}{new_row}"
+        super().move(target_square)
 
 
 class Rook(BaseChessPiece):
@@ -191,4 +227,44 @@ class Board:
             print(f"{piece} has been killed at {square}")
         else:
             print(f"No piece to kill at {square}")
+
+
+class BoardMovements:
+
+    @staticmethod
+    def forward(position: str, color: str, steps: int = 1) -> str:
+        column = position[0]
+        row = int(position[1])
+
+        # White moves up, Black moves down
+        new_row = row + steps if color == "WHITE" else row - steps
+
+        # Stay inside board boundaries
+        if new_row < 1:
+            new_row = 1
+        elif new_row > 8:
+            new_row = 8
+
+        return f"{column}{new_row}"
+
+    @staticmethod
+    def backward(position: str, color: str, steps: int = 1) -> str:
+        # Just the opposite of forward
+        return BoardMovements.forward(position, color, -steps)
+
+    @staticmethod
+    def left(position: str, steps: int = 1) -> str:
+        column = chr(ord(position[0]) - steps)
+        row = position[1]
+        if column < 'a':
+            column = 'a'
+        return f"{column}{row}"
+
+    @staticmethod
+    def right(position: str, steps: int = 1) -> str:
+        column = chr(ord(position[0]) + steps)
+        row = position[1]
+        if column > 'h':
+            column = 'h'
+        return f"{column}{row}"
         
