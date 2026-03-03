@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 #test
 class BaseChessPiece(ABC):
 
@@ -15,17 +16,20 @@ class BaseChessPiece(ABC):
     @abstractmethod
     def move(self, target_square: str):
 
-        # Default logic to move on the board:
         if self.board is None:
             print("Board not defined for this piece")
             return
 
-        new_location = self.board.squares.get(target_square)
+        if target_square not in self.board.squares:
+            print("Invalid square!")
+            return
 
-        
+        new_location = self.board.squares[target_square]
+
         if new_location is None:
             print(f"{self} moves to {target_square}")
-        else: 
+
+        else:
             if new_location.color != self.color:
                 print(f"{self} captures {new_location} at {target_square}")
                 self.board.kill_piece(target_square)
@@ -33,10 +37,10 @@ class BaseChessPiece(ABC):
                 print(f"{self} cannot move to {target_square}, friendly piece there!")
                 return
 
-       
         self.board.squares[self.position] = None
         self.board.squares[target_square] = self
         self.position = target_square
+
 
     def set_position(self, square: str):
         self.position = square
@@ -58,24 +62,27 @@ class BaseChessPiece(ABC):
 class Pawn(BaseChessPiece):
 
     def __init__(self, color: str, identifier: int):
-        super().__init__(color, "Pawn", "-", identifier)
+        super().__init__(color, "Pawn", "P", identifier)
 
     def move(self):
+
         if self.position is None or self.board is None:
             print("Cannot move, piece not on board")
             return
 
-        # Determine direction based on color
         row = int(self.position[1])
         col = self.position[0]
+
+        # White moves up, black moves down
         new_row = row + 1 if self.color == "WHITE" else row - 1
 
-        # Make sure pawn does not go off-board
         if new_row < 1 or new_row > 8:
             print(f"{self} cannot move off the board!")
             return
 
         target_square = f"{col}{new_row}"
+
+        # Call base movement logic
         super().move(target_square)
 
 
@@ -301,6 +308,11 @@ class Board:
             and piece.color == color
         ]
         return pieces[0] if pieces else None
+    
+    def place_piece(self, piece, square):
+        self.squares[square] = piece
+        piece.set_position(square)
+        piece.define_board(self)
     
 
     def kill_piece(self, square: str):
