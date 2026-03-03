@@ -140,8 +140,8 @@ class Bishop(BaseChessPiece):
 
 class Knight(BaseChessPiece):
 
-def __init__(self, color: str, identifier: int):
-        super().__init__(color, "Knight", "N", identifier)
+    def __init__(self, color: str, identifier: int):
+            super().__init__(color, "Knight", "N", identifier)
 
     def move(self, pattern: str):
         """
@@ -201,7 +201,15 @@ class King(BaseChessPiece):
             Bishop.move(self, direction, 1)
 
 
+import functools
 
+def auto_print_board(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        self.print_board()
+        return result
+    return wrapper
 
 class Board:
 
@@ -260,23 +268,28 @@ class Board:
 
         self.squares.update(white_pawns)
 
+    @auto_print_board
     def move_piece(self, from_square, to_square):
-        piece = self.squares[from_square]
+
+        piece = self.squares.get(from_square)
 
         if piece is None:
             print(f"No piece at {from_square}")
             return
 
-        # Check if target square has a piece
-        target = self.squares[to_square]
-        if target is not None:
-            target.die()  # kill piece
-            print(f"{piece} captures {target} at {to_square}")
+        target = self.squares.get(to_square)
 
-        # Move piece
+        if target is not None:
+            if target.color != piece.color:
+                print(f"{piece} captures {target} at {to_square}")
+                target.die()
+            else:
+                print("Cannot move onto your own piece")
+                return
+
         self.squares[to_square] = piece
         self.squares[from_square] = None
-        piece.set_position(to_square)
+        piece.position = to_square
 
     def find_piece(self, symbol: str, identifier: int, color: str):
 
