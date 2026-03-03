@@ -84,9 +84,24 @@ class Rook(BaseChessPiece):
     def __init__(self, color: str, identifier: int):
         super().__init__(color, "Rook", "R", identifier)
 
-    def move(self):
-        movement = "Rook moves in a straight line"
-        super().move(movement)
+    def move(self, direction: str, steps: int = 1):
+        if self.position is None or self.board is None:
+            print("Cannot move, piece not on board")
+            return
+
+        if direction == "forward":
+            target_square = BoardMovements.forward(self.position, self.color, steps)
+        elif direction == "backward":
+            target_square = BoardMovements.forward(self.position, self.color, -steps)
+        elif direction == "left":
+            target_square = BoardMovements.left(self.position, steps)
+        elif direction == "right":
+            target_square = BoardMovements.right(self.position, steps)
+        else:
+            print("Invalid direction")
+            return
+
+        super().move(target_square)
 
 
 class Bishop(BaseChessPiece):
@@ -94,19 +109,70 @@ class Bishop(BaseChessPiece):
     def __init__(self, color: str, identifier: int):
         super().__init__(color, "Bishop", "B", identifier)
 
-    def move(self):
-        movement = "Bishop moves diagonally"
-        super().move(movement)
+    def move(self, direction: str, steps: int = 1):
+        if self.position is None or self.board is None:
+            print("Cannot move, piece not on board")
+            return
+
+        # diagonal directions: "forward-left", "forward-right", "backward-left", "backward-right"
+        col = self.position[0]
+        row = int(self.position[1])
+
+        if "forward" in direction:
+            new_row = row + 1 if self.color == "WHITE" else row - 1
+        else:
+            new_row = row - 1 if self.color == "WHITE" else row + 1
+
+        if "left" in direction:
+            new_col = chr(ord(col) - steps)
+        else:  # right
+            new_col = chr(ord(col) + steps)
+
+        # clamp to board
+        if new_col < 'a': new_col = 'a'
+        if new_col > 'h': new_col = 'h'
+        if new_row < 1: new_row = 1
+        if new_row > 8: new_row = 8
+
+        target_square = f"{new_col}{new_row}"
+        super().move(target_square)
 
 
 class Knight(BaseChessPiece):
 
-    def __init__(self, color: str, identifier: int):
+def __init__(self, color: str, identifier: int):
         super().__init__(color, "Knight", "N", identifier)
 
-    def move(self):
-        movement = "Knight moves in an L shape"
-        super().move(movement)
+    def move(self, pattern: str):
+        """
+        pattern: "forward-left", "forward-right", "backward-left", etc.
+        """
+        col = self.position[0]
+        row = int(self.position[1])
+
+        # L-shape: 2 in one direction, 1 in perpendicular
+        if pattern == "forward-left":
+            new_row = row + 2 if self.color == "WHITE" else row - 2
+            new_col = chr(ord(col) - 1)
+        elif pattern == "forward-right":
+            new_row = row + 2 if self.color == "WHITE" else row - 2
+            new_col = chr(ord(col) + 1)
+        elif pattern == "backward-left":
+            new_row = row - 2 if self.color == "WHITE" else row + 2
+            new_col = chr(ord(col) - 1)
+        elif pattern == "backward-right":
+            new_row = row - 2 if self.color == "WHITE" else row + 2
+            new_col = chr(ord(col) + 1)
+        else:
+            print("Invalid knight pattern")
+            return
+
+        # Clamp to board
+        new_col = max('a', min(new_col, 'h'))
+        new_row = max(1, min(new_row, 8))
+
+        target_square = f"{new_col}{new_row}"
+        super().move(target_square)
 
 
 class Queen(BaseChessPiece):
@@ -114,9 +180,12 @@ class Queen(BaseChessPiece):
     def __init__(self, color: str, identifier: int):
         super().__init__(color, "Queen", "Q", identifier)
 
-    def move(self):
-        movement = "Queen moves in all directions"
-        super().move(movement)
+    def move(self, direction: str, steps: int = 1):
+        # Queen combines rook + bishop logic
+        if direction in ["forward", "backward", "left", "right"]:
+            Rook.move(self, direction, steps)
+        else:  # diagonal moves
+            Bishop.move(self, direction, steps)
 
 
 class King(BaseChessPiece):
@@ -124,9 +193,12 @@ class King(BaseChessPiece):
     def __init__(self, color: str, identifier: int):
         super().__init__(color, "King", "K", identifier)
 
-    def move(self):
-        movement = "King moves one square in any direction"
-        super().move(movement)
+    def move(self, direction: str):
+        # King moves only 1 square
+        if direction in ["forward", "backward", "left", "right"]:
+            Rook.move(self, direction, 1)
+        else:
+            Bishop.move(self, direction, 1)
 
 
 
